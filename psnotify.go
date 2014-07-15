@@ -320,8 +320,30 @@ var filter, filterarg string
 
 func init() {
     f := flag.String("f", "", "filter")
+    h := flag.Bool("h", false, "help")
 
     flag.Parse()
+
+    if h != nil && *h {
+        fmt.Print(
+`-f <filter>=<value>
+    Uid filters:
+        uid.real
+        uid.effective
+        uid.saved
+        uid.fs
+    Proc filters:
+        pid
+        ppid
+        cmdline
+
+    EXAMPLES:
+       psnotify -f uid.real=1004
+       psnotify -f cmdline=apache
+`)
+        os.Exit(0)
+    }
+
     if f != nil && *f != "" {
         fltarg := strings.Split(*f, "=")
         filter = fltarg[0]
@@ -433,6 +455,7 @@ func newProc(pid uint32) (err error, proc Proc) {
     m := make(map[string](func(p *Proc, val string) bool))
 
     m["PPid"] = func(p *Proc, val string) bool {
+        val = strings.TrimLeft(val, " \t")
         i64, err := strconv.ParseUint(val, 10, 0)
         if err != nil {
             return false
